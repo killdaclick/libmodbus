@@ -1783,6 +1783,101 @@ int modbus_set_debug(modbus_t *ctx, int flag)
     return 0;
 }
 
+// Shared Memory Version [1MA]
+/* Allocates 4 arrays to store bits, input bits, registers and inputs
+   registers. The pointers are stored in modbus_mapping structure.
+
+   The modbus_mapping_new() function shall return the new allocated structure if
+   successful. Otherwise it shall return NULL and set errno to ENOMEM. */
+modbus_mapping_t* modbus_mapping_new(int nb_bits, int nb_input_bits,
+                                     int nb_registers, int nb_input_registers, void* shm)
+{
+    modbus_mapping_t *mb_mapping;
+
+	if( shmMM != NULL )
+	{
+		mb_mapping = (modbus_mapping_t*)shm;
+	}
+	else
+	{
+		mb_mapping = (modbus_mapping_t *)malloc(sizeof(modbus_mapping_t));
+		if (mb_mapping == NULL) {
+			return NULL;
+		}
+	}
+
+    /* 0X */
+    mb_mapping->nb_bits = nb_bits;
+    if (nb_bits == 0) {
+        mb_mapping->tab_bits = NULL;
+    } else {
+        /* Negative number raises a POSIX error */
+		mb_mapping->tab_bits = shm + sizeof(modbus_mapping_t);
+		//mb_mapping->tab_bits =
+        //    (uint8_t *) malloc(nb_bits * sizeof(uint8_t));
+        if (mb_mapping->tab_bits == NULL) {
+            //free(mb_mapping);
+            return NULL;
+        }
+        memset(mb_mapping->tab_bits, 0, nb_bits * sizeof(uint8_t));
+    }
+
+    /* 1X */
+    mb_mapping->nb_input_bits = nb_input_bits;
+    if (nb_input_bits == 0) {
+        mb_mapping->tab_input_bits = NULL;
+    } else {
+        mb_mapping->tab_input_bits = shm + sizeof(modbus_mapping_t) + nb_bits * sizeof(uint8_t);
+		//mb_mapping->tab_input_bits =
+        //    (uint8_t *) malloc(nb_input_bits * sizeof(uint8_t));
+        if (mb_mapping->tab_input_bits == NULL) {
+            //free(mb_mapping->tab_bits);
+            //free(mb_mapping);
+            return NULL;
+        }
+        memset(mb_mapping->tab_input_bits, 0, nb_input_bits * sizeof(uint8_t));
+    }
+
+    /* 4X */
+    mb_mapping->nb_registers = nb_registers;
+    if (nb_registers == 0) {
+        mb_mapping->tab_registers = NULL;
+    } else {
+        mb_mapping->tab_registers = shm + sizeof(modbus_mapping_t) + nb_bits * sizeof(uint8_t) + nb_input_bits * sizeof(uint8_t);
+		//mb_mapping->tab_registers =
+        //    (uint16_t *) malloc(nb_registers * sizeof(uint16_t));
+        if (mb_mapping->tab_registers == NULL) {
+            //free(mb_mapping->tab_input_bits);
+            //free(mb_mapping->tab_bits);
+            //free(mb_mapping);
+            return NULL;
+        }
+        memset(mb_mapping->tab_registers, 0, nb_registers * sizeof(uint16_t));
+    }
+
+    /* 3X */
+    mb_mapping->nb_input_registers = nb_input_registers;
+    if (nb_input_registers == 0) {
+        mb_mapping->tab_input_registers = NULL;
+    } else {
+        mb_mapping->tab_input_registers = shm + sizeof(modbus_mapping_t) + nb_bits * sizeof(uint8_t) + nb_input_bits * sizeof(uint8_t) + nb_registers * sizeof(uint16_t);
+		//mb_mapping->tab_input_registers =
+        //    (uint16_t *) malloc(nb_input_registers * sizeof(uint16_t));
+        if (mb_mapping->tab_input_registers == NULL) {
+            //free(mb_mapping->tab_registers);
+            //free(mb_mapping->tab_input_bits);
+            //free(mb_mapping->tab_bits);
+            //free(mb_mapping);
+            return NULL;
+        }
+        memset(mb_mapping->tab_input_registers, 0,
+               nb_input_registers * sizeof(uint16_t));
+    }
+
+    return mb_mapping;
+}
+
+// Original version
 /* Allocates 4 arrays to store bits, input bits, registers and inputs
    registers. The pointers are stored in modbus_mapping structure.
 

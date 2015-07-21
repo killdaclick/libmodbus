@@ -209,8 +209,12 @@ MODBUS_API int modbus_write_and_read_registers(modbus_t *ctx, int write_addr, in
                                                uint16_t *dest);
 MODBUS_API int modbus_report_slave_id(modbus_t *ctx, int max_dest, uint8_t *dest);
 
+// Original version
 MODBUS_API modbus_mapping_t* modbus_mapping_new(int nb_bits, int nb_input_bits,
                                             int nb_registers, int nb_input_registers);
+// Shared Memory Version [1MA]
+MODBUS_API modbus_mapping_t* modbus_mapping_new(int nb_bits, int nb_input_bits,
+                                            int nb_registers, int nb_input_registers, void* shm);
 MODBUS_API void modbus_mapping_free(modbus_mapping_t *mb_mapping);
 
 MODBUS_API int modbus_send_raw_request(modbus_t *ctx, uint8_t *raw_req, int raw_req_length);
