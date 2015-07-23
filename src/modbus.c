@@ -1830,16 +1830,16 @@ modbus_mapping_t* modbus_mapping_new_shm(int nb_bits, int nb_input_bits,
     modbus_mapping_t *mb_mapping;
 
     if( shm != NULL )
-	{
-		mb_mapping = (modbus_mapping_t*)shm;
-	}
-	else
-	{
-		mb_mapping = (modbus_mapping_t *)malloc(sizeof(modbus_mapping_t));
-		if (mb_mapping == NULL) {
-			return NULL;
-		}
-	}
+    {
+        mb_mapping = (modbus_mapping_t*)shm;
+    }
+    else
+    {
+        mb_mapping = (modbus_mapping_t *)malloc(sizeof(modbus_mapping_t));
+        if (mb_mapping == NULL) {
+            return NULL;
+        }
+    }
 
     /* 0X */
     mb_mapping->nb_bits = nb_bits;
@@ -1847,8 +1847,8 @@ modbus_mapping_t* modbus_mapping_new_shm(int nb_bits, int nb_input_bits,
         mb_mapping->tab_bits = NULL;
     } else {
         /* Negative number raises a POSIX error */
-        mb_mapping->tab_bits = shm + sizeof(modbus_mapping_t);
-		//mb_mapping->tab_bits =
+        mb_mapping->tab_bits = (uint8_t*)(shm + sizeof(modbus_mapping_t));
+        //mb_mapping->tab_bits =
         //    (uint8_t *) malloc(nb_bits * sizeof(uint8_t));
         if (mb_mapping->tab_bits == NULL) {
             //free(mb_mapping);
@@ -1862,8 +1862,8 @@ modbus_mapping_t* modbus_mapping_new_shm(int nb_bits, int nb_input_bits,
     if (nb_input_bits == 0) {
         mb_mapping->tab_input_bits = NULL;
     } else {
-        mb_mapping->tab_input_bits = shm + sizeof(modbus_mapping_t) + nb_bits * sizeof(uint8_t);
-		//mb_mapping->tab_input_bits =
+        mb_mapping->tab_input_bits = (uint8_t*)(shm + sizeof(modbus_mapping_t) + nb_bits * sizeof(uint8_t));
+        //mb_mapping->tab_input_bits =
         //    (uint8_t *) malloc(nb_input_bits * sizeof(uint8_t));
         if (mb_mapping->tab_input_bits == NULL) {
             //free(mb_mapping->tab_bits);
@@ -1878,8 +1878,8 @@ modbus_mapping_t* modbus_mapping_new_shm(int nb_bits, int nb_input_bits,
     if (nb_registers == 0) {
         mb_mapping->tab_registers = NULL;
     } else {
-        mb_mapping->tab_registers = shm + sizeof(modbus_mapping_t) + nb_bits * sizeof(uint8_t) + nb_input_bits * sizeof(uint8_t);
-		//mb_mapping->tab_registers =
+        mb_mapping->tab_registers = (uint16_t*)(shm + sizeof(modbus_mapping_t) + nb_bits * sizeof(uint8_t) + nb_input_bits * sizeof(uint8_t));
+        //mb_mapping->tab_registers =
         //    (uint16_t *) malloc(nb_registers * sizeof(uint16_t));
         if (mb_mapping->tab_registers == NULL) {
             //free(mb_mapping->tab_input_bits);
@@ -1895,8 +1895,8 @@ modbus_mapping_t* modbus_mapping_new_shm(int nb_bits, int nb_input_bits,
     if (nb_input_registers == 0) {
         mb_mapping->tab_input_registers = NULL;
     } else {
-        mb_mapping->tab_input_registers = shm + sizeof(modbus_mapping_t) + nb_bits * sizeof(uint8_t) + nb_input_bits * sizeof(uint8_t) + nb_registers * sizeof(uint16_t);
-		//mb_mapping->tab_input_registers =
+        mb_mapping->tab_input_registers = (uint16_t*)(shm + sizeof(modbus_mapping_t) + nb_bits * sizeof(uint8_t) + nb_input_bits * sizeof(uint8_t) + nb_registers * sizeof(uint16_t));
+        //mb_mapping->tab_input_registers =
         //    (uint16_t *) malloc(nb_input_registers * sizeof(uint16_t));
         if (mb_mapping->tab_input_registers == NULL) {
             //free(mb_mapping->tab_registers);
