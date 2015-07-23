@@ -705,67 +705,81 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
     /* Data are flushed on illegal number of values errors. */
     switch (function) {
     case MODBUS_FC_READ_COILS: {
-        int nb = (req[offset + 3] << 8) + req[offset + 4];
+        // not used [1MA]
+        _sleep_response_timeout(ctx);
+        modbus_flush(ctx);
+        rsp_length = response_exception(
+            ctx, &sft,
+            MODBUS_EXCEPTION_ILLEGAL_FUNCTION, rsp);
 
-        if (nb < 1 || MODBUS_MAX_READ_BITS < nb) {
-            if (ctx->debug) {
-                fprintf(stderr,
-                        "Illegal nb of values %d in read_bits (max %d)\n",
-                        nb, MODBUS_MAX_READ_BITS);
-            }
-            _sleep_response_timeout(ctx);
-            modbus_flush(ctx);
-            rsp_length = response_exception(
-                ctx, &sft,
-                MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
-        } else if ((address + nb) > mb_mapping->nb_bits) {
-            if (ctx->debug) {
-                fprintf(stderr, "Illegal data address 0x%0X in read_bits\n",
-                        address + nb);
-            }
-            rsp_length = response_exception(
-                ctx, &sft,
-                MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
-        } else {
-            rsp_length = ctx->backend->build_response_basis(&sft, rsp);
-            rsp[rsp_length++] = (nb / 8) + ((nb % 8) ? 1 : 0);
-            rsp_length = response_io_status(address, nb,
-                                            mb_mapping->tab_bits,
-                                            rsp, rsp_length);
-        }
+//        int nb = (req[offset + 3] << 8) + req[offset + 4];
+
+//        if (nb < 1 || MODBUS_MAX_READ_BITS < nb) {
+//            if (ctx->debug) {
+//                fprintf(stderr,
+//                        "Illegal nb of values %d in read_bits (max %d)\n",
+//                        nb, MODBUS_MAX_READ_BITS);
+//            }
+//            _sleep_response_timeout(ctx);
+//            modbus_flush(ctx);
+//            rsp_length = response_exception(
+//                ctx, &sft,
+//                MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
+//        } else if ((address + nb) > mb_mapping->nb_bits) {
+//            if (ctx->debug) {
+//                fprintf(stderr, "Illegal data address 0x%0X in read_bits\n",
+//                        address + nb);
+//            }
+//            rsp_length = response_exception(
+//                ctx, &sft,
+//                MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
+//        } else {
+//            rsp_length = ctx->backend->build_response_basis(&sft, rsp);
+//            rsp[rsp_length++] = (nb / 8) + ((nb % 8) ? 1 : 0);
+//            rsp_length = response_io_status(address, nb,
+//                                            mb_mapping->tab_bits,
+//                                            rsp, rsp_length);
+//        }
     }
         break;
     case MODBUS_FC_READ_DISCRETE_INPUTS: {
-        /* Similar to coil status (but too many arguments to use a
-         * function) */
-        int nb = (req[offset + 3] << 8) + req[offset + 4];
+        // not used [1MA]
+        _sleep_response_timeout(ctx);
+        modbus_flush(ctx);
+        rsp_length = response_exception(
+            ctx, &sft,
+            MODBUS_EXCEPTION_ILLEGAL_FUNCTION, rsp);
 
-        if (nb < 1 || MODBUS_MAX_READ_BITS < nb) {
-            if (ctx->debug) {
-                fprintf(stderr,
-                        "Illegal nb of values %d in read_input_bits (max %d)\n",
-                        nb, MODBUS_MAX_READ_BITS);
-            }
-            _sleep_response_timeout(ctx);
-            modbus_flush(ctx);
-            rsp_length = response_exception(
-                ctx, &sft,
-                MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
-        } else if ((address + nb) > mb_mapping->nb_input_bits) {
-            if (ctx->debug) {
-                fprintf(stderr, "Illegal data address 0x%0X in read_input_bits\n",
-                        address + nb);
-            }
-            rsp_length = response_exception(
-                ctx, &sft,
-                MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
-        } else {
-            rsp_length = ctx->backend->build_response_basis(&sft, rsp);
-            rsp[rsp_length++] = (nb / 8) + ((nb % 8) ? 1 : 0);
-            rsp_length = response_io_status(address, nb,
-                                            mb_mapping->tab_input_bits,
-                                            rsp, rsp_length);
-        }
+//        /* Similar to coil status (but too many arguments to use a
+//         * function) */
+//        int nb = (req[offset + 3] << 8) + req[offset + 4];
+
+//        if (nb < 1 || MODBUS_MAX_READ_BITS < nb) {
+//            if (ctx->debug) {
+//                fprintf(stderr,
+//                        "Illegal nb of values %d in read_input_bits (max %d)\n",
+//                        nb, MODBUS_MAX_READ_BITS);
+//            }
+//            _sleep_response_timeout(ctx);
+//            modbus_flush(ctx);
+//            rsp_length = response_exception(
+//                ctx, &sft,
+//                MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
+//        } else if ((address + nb) > mb_mapping->nb_input_bits) {
+//            if (ctx->debug) {
+//                fprintf(stderr, "Illegal data address 0x%0X in read_input_bits\n",
+//                        address + nb);
+//            }
+//            rsp_length = response_exception(
+//                ctx, &sft,
+//                MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
+//        } else {
+//            rsp_length = ctx->backend->build_response_basis(&sft, rsp);
+//            rsp[rsp_length++] = (nb / 8) + ((nb % 8) ? 1 : 0);
+//            rsp_length = response_io_status(address, nb,
+//                                            mb_mapping->tab_input_bits,
+//                                            rsp, rsp_length);
+//        }
     }
         break;
     case MODBUS_FC_READ_HOLDING_REGISTERS: {
@@ -803,68 +817,82 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
     }
         break;
     case MODBUS_FC_READ_INPUT_REGISTERS: {
-        /* Similar to holding registers (but too many arguments to use a
-         * function) */
-        int nb = (req[offset + 3] << 8) + req[offset + 4];
+        // not used [1MA]
+        _sleep_response_timeout(ctx);
+        modbus_flush(ctx);
+        rsp_length = response_exception(
+            ctx, &sft,
+            MODBUS_EXCEPTION_ILLEGAL_FUNCTION, rsp);
 
-        if (nb < 1 || MODBUS_MAX_READ_REGISTERS < nb) {
-            if (ctx->debug) {
-                fprintf(stderr,
-                        "Illegal number of values %d in read_input_registers (max %d)\n",
-                        nb, MODBUS_MAX_READ_REGISTERS);
-            }
-            _sleep_response_timeout(ctx);
-            modbus_flush(ctx);
-            rsp_length = response_exception(
-                ctx, &sft,
-                MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
-        } else if ((address + nb) > mb_mapping->nb_input_registers) {
-            if (ctx->debug) {
-                fprintf(stderr, "Illegal data address 0x%0X in read_input_registers\n",
-                        address + nb);
-            }
-            rsp_length = response_exception(
-                ctx, &sft,
-                MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
-        } else {
-            int i;
+//        /* Similar to holding registers (but too many arguments to use a
+//         * function) */
+//        int nb = (req[offset + 3] << 8) + req[offset + 4];
 
-            rsp_length = ctx->backend->build_response_basis(&sft, rsp);
-            rsp[rsp_length++] = nb << 1;
-            for (i = address; i < address + nb; i++) {
-                rsp[rsp_length++] = mb_mapping->tab_input_registers[i] >> 8;
-                rsp[rsp_length++] = mb_mapping->tab_input_registers[i] & 0xFF;
-            }
-        }
+//        if (nb < 1 || MODBUS_MAX_READ_REGISTERS < nb) {
+//            if (ctx->debug) {
+//                fprintf(stderr,
+//                        "Illegal number of values %d in read_input_registers (max %d)\n",
+//                        nb, MODBUS_MAX_READ_REGISTERS);
+//            }
+//            _sleep_response_timeout(ctx);
+//            modbus_flush(ctx);
+//            rsp_length = response_exception(
+//                ctx, &sft,
+//                MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
+//        } else if ((address + nb) > mb_mapping->nb_input_registers) {
+//            if (ctx->debug) {
+//                fprintf(stderr, "Illegal data address 0x%0X in read_input_registers\n",
+//                        address + nb);
+//            }
+//            rsp_length = response_exception(
+//                ctx, &sft,
+//                MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
+//        } else {
+//            int i;
+
+//            rsp_length = ctx->backend->build_response_basis(&sft, rsp);
+//            rsp[rsp_length++] = nb << 1;
+//            for (i = address; i < address + nb; i++) {
+//                rsp[rsp_length++] = mb_mapping->tab_input_registers[i] >> 8;
+//                rsp[rsp_length++] = mb_mapping->tab_input_registers[i] & 0xFF;
+//            }
+//        }
     }
         break;
-    case MODBUS_FC_WRITE_SINGLE_COIL:
-        if (address >= mb_mapping->nb_bits) {
-            if (ctx->debug) {
-                fprintf(stderr,
-                        "Illegal data address 0x%0X in write_bit\n",
-                        address);
-            }
-            rsp_length = response_exception(
-                ctx, &sft,
-                MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
-        } else {
-            int data = (req[offset + 3] << 8) + req[offset + 4];
+    case MODBUS_FC_WRITE_SINGLE_COIL: {
+        // not used [1MA]
+        _sleep_response_timeout(ctx);
+        modbus_flush(ctx);
+        rsp_length = response_exception(
+            ctx, &sft,
+            MODBUS_EXCEPTION_ILLEGAL_FUNCTION, rsp);
 
-            if (data == 0xFF00 || data == 0x0) {
-                mb_mapping->tab_bits[address] = (data) ? ON : OFF;
-                memcpy(rsp, req, req_length);
-                rsp_length = req_length;
-            } else {
-                if (ctx->debug) {
-                    fprintf(stderr,
-                            "Illegal data value 0x%0X in write_bit request at address %0X\n",
-                            data, address);
-                }
-                rsp_length = response_exception(
-                    ctx, &sft,
-                    MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
-            }
+//        if (address >= mb_mapping->nb_bits) {
+//            if (ctx->debug) {
+//                fprintf(stderr,
+//                        "Illegal data address 0x%0X in write_bit\n",
+//                        address);
+//            }
+//            rsp_length = response_exception(
+//                ctx, &sft,
+//                MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
+//        } else {
+//            int data = (req[offset + 3] << 8) + req[offset + 4];
+
+//            if (data == 0xFF00 || data == 0x0) {
+//                mb_mapping->tab_bits[address] = (data) ? ON : OFF;
+//                memcpy(rsp, req, req_length);
+//                rsp_length = req_length;
+//            } else {
+//                if (ctx->debug) {
+//                    fprintf(stderr,
+//                            "Illegal data value 0x%0X in write_bit request at address %0X\n",
+//                            data, address);
+//                }
+//                rsp_length = response_exception(
+//                    ctx, &sft,
+//                    MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
+//            }
         }
         break;
     case MODBUS_FC_WRITE_SINGLE_REGISTER:
@@ -885,39 +913,46 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
         }
         break;
     case MODBUS_FC_WRITE_MULTIPLE_COILS: {
-        int nb = (req[offset + 3] << 8) + req[offset + 4];
+        // not used [1MA]
+        _sleep_response_timeout(ctx);
+        modbus_flush(ctx);
+        rsp_length = response_exception(
+            ctx, &sft,
+            MODBUS_EXCEPTION_ILLEGAL_FUNCTION, rsp);
 
-        if (nb < 1 || MODBUS_MAX_WRITE_BITS < nb) {
-            if (ctx->debug) {
-                fprintf(stderr,
-                        "Illegal number of values %d in write_bits (max %d)\n",
-                        nb, MODBUS_MAX_WRITE_BITS);
-            }
-            /* May be the indication has been truncated on reading because of
-             * invalid address (eg. nb is 0 but the request contains values to
-             * write) so it's necessary to flush. */
-            _sleep_response_timeout(ctx);
-            modbus_flush(ctx);
-            rsp_length = response_exception(
-                ctx, &sft,
-                MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
-        } else if ((address + nb) > mb_mapping->nb_bits) {
-            if (ctx->debug) {
-                fprintf(stderr, "Illegal data address 0x%0X in write_bits\n",
-                        address + nb);
-            }
-            rsp_length = response_exception(
-                ctx, &sft,
-                MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
-        } else {
-            /* 6 = byte count */
-            modbus_set_bits_from_bytes(mb_mapping->tab_bits, address, nb, &req[offset + 6]);
+//        int nb = (req[offset + 3] << 8) + req[offset + 4];
 
-            rsp_length = ctx->backend->build_response_basis(&sft, rsp);
-            /* 4 to copy the bit address (2) and the quantity of bits */
-            memcpy(rsp + rsp_length, req + rsp_length, 4);
-            rsp_length += 4;
-        }
+//        if (nb < 1 || MODBUS_MAX_WRITE_BITS < nb) {
+//            if (ctx->debug) {
+//                fprintf(stderr,
+//                        "Illegal number of values %d in write_bits (max %d)\n",
+//                        nb, MODBUS_MAX_WRITE_BITS);
+//            }
+//            /* May be the indication has been truncated on reading because of
+//             * invalid address (eg. nb is 0 but the request contains values to
+//             * write) so it's necessary to flush. */
+//            _sleep_response_timeout(ctx);
+//            modbus_flush(ctx);
+//            rsp_length = response_exception(
+//                ctx, &sft,
+//                MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
+//        } else if ((address + nb) > mb_mapping->nb_bits) {
+//            if (ctx->debug) {
+//                fprintf(stderr, "Illegal data address 0x%0X in write_bits\n",
+//                        address + nb);
+//            }
+//            rsp_length = response_exception(
+//                ctx, &sft,
+//                MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
+//        } else {
+//            /* 6 = byte count */
+//            modbus_set_bits_from_bytes(mb_mapping->tab_bits, address, nb, &req[offset + 6]);
+
+//            rsp_length = ctx->backend->build_response_basis(&sft, rsp);
+//            /* 4 to copy the bit address (2) and the quantity of bits */
+//            memcpy(rsp + rsp_length, req + rsp_length, 4);
+//            rsp_length += 4;
+//        }
     }
         break;
     case MODBUS_FC_WRITE_MULTIPLE_REGISTERS: {
@@ -1789,12 +1824,12 @@ int modbus_set_debug(modbus_t *ctx, int flag)
 
    The modbus_mapping_new() function shall return the new allocated structure if
    successful. Otherwise it shall return NULL and set errno to ENOMEM. */
-modbus_mapping_t* modbus_mapping_new(int nb_bits, int nb_input_bits,
-                                     int nb_registers, int nb_input_registers, void* shm)
+modbus_mapping_t* modbus_mapping_new_shm(int nb_bits, int nb_input_bits,
+                                     int nb_registers, int nb_input_registers, int* shm)
 {
     modbus_mapping_t *mb_mapping;
 
-	if( shmMM != NULL )
+    if( shm != NULL )
 	{
 		mb_mapping = (modbus_mapping_t*)shm;
 	}
@@ -1812,7 +1847,7 @@ modbus_mapping_t* modbus_mapping_new(int nb_bits, int nb_input_bits,
         mb_mapping->tab_bits = NULL;
     } else {
         /* Negative number raises a POSIX error */
-		mb_mapping->tab_bits = shm + sizeof(modbus_mapping_t);
+        mb_mapping->tab_bits = shm + sizeof(modbus_mapping_t);
 		//mb_mapping->tab_bits =
         //    (uint8_t *) malloc(nb_bits * sizeof(uint8_t));
         if (mb_mapping->tab_bits == NULL) {
@@ -1884,6 +1919,89 @@ modbus_mapping_t* modbus_mapping_new(int nb_bits, int nb_input_bits,
    The modbus_mapping_new() function shall return the new allocated structure if
    successful. Otherwise it shall return NULL and set errno to ENOMEM. */
 modbus_mapping_t* modbus_mapping_new(int nb_bits, int nb_input_bits,
+                                     int nb_registers, int nb_input_registers)
+{
+    modbus_mapping_t *mb_mapping;
+
+    mb_mapping = (modbus_mapping_t *)malloc(sizeof(modbus_mapping_t));
+    if (mb_mapping == NULL) {
+        return NULL;
+    }
+
+    /* 0X */
+    mb_mapping->nb_bits = nb_bits;
+    if (nb_bits == 0) {
+        mb_mapping->tab_bits = NULL;
+    } else {
+        /* Negative number raises a POSIX error */
+        mb_mapping->tab_bits =
+            (uint8_t *) malloc(nb_bits * sizeof(uint8_t));
+        if (mb_mapping->tab_bits == NULL) {
+            free(mb_mapping);
+            return NULL;
+        }
+        memset(mb_mapping->tab_bits, 0, nb_bits * sizeof(uint8_t));
+    }
+
+    /* 1X */
+    mb_mapping->nb_input_bits = nb_input_bits;
+    if (nb_input_bits == 0) {
+        mb_mapping->tab_input_bits = NULL;
+    } else {
+        mb_mapping->tab_input_bits =
+            (uint8_t *) malloc(nb_input_bits * sizeof(uint8_t));
+        if (mb_mapping->tab_input_bits == NULL) {
+            free(mb_mapping->tab_bits);
+            free(mb_mapping);
+            return NULL;
+        }
+        memset(mb_mapping->tab_input_bits, 0, nb_input_bits * sizeof(uint8_t));
+    }
+
+    /* 4X */
+    mb_mapping->nb_registers = nb_registers;
+    if (nb_registers == 0) {
+        mb_mapping->tab_registers = NULL;
+    } else {
+        mb_mapping->tab_registers =
+            (uint16_t *) malloc(nb_registers * sizeof(uint16_t));
+        if (mb_mapping->tab_registers == NULL) {
+            free(mb_mapping->tab_input_bits);
+            free(mb_mapping->tab_bits);
+            free(mb_mapping);
+            return NULL;
+        }
+        memset(mb_mapping->tab_registers, 0, nb_registers * sizeof(uint16_t));
+    }
+
+    /* 3X */
+    mb_mapping->nb_input_registers = nb_input_registers;
+    if (nb_input_registers == 0) {
+        mb_mapping->tab_input_registers = NULL;
+    } else {
+        mb_mapping->tab_input_registers =
+            (uint16_t *) malloc(nb_input_registers * sizeof(uint16_t));
+        if (mb_mapping->tab_input_registers == NULL) {
+            free(mb_mapping->tab_registers);
+            free(mb_mapping->tab_input_bits);
+            free(mb_mapping->tab_bits);
+            free(mb_mapping);
+            return NULL;
+        }
+        memset(mb_mapping->tab_input_registers, 0,
+               nb_input_registers * sizeof(uint16_t));
+    }
+
+    return mb_mapping;
+}
+
+// No malloc version [1MA]
+/* Allocates 4 arrays to store bits, input bits, registers and inputs
+   registers. The pointers are stored in modbus_mapping structure.
+
+   The modbus_mapping_new() function shall return the new allocated structure if
+   successful. Otherwise it shall return NULL and set errno to ENOMEM. */
+modbus_mapping_t* modbus_mapping_new_nomalloc(int nb_bits, int nb_input_bits,
                                      int nb_registers, int nb_input_registers)
 {
     modbus_mapping_t *mb_mapping;
