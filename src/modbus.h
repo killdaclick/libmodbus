@@ -23,6 +23,13 @@
 // SHM CTRL [1MA]
 #include "shmctrl/shmctrl.h"
 
+#define TRANSLATE_ADDR_FROM_MODULES(x,y)    y=x     // to bedzie funkcja ktora tlumaczy adresy MODBUS z modulow na adresy koncentratora
+#define TRANSLATE_ADDR_TO_MODULES(x,y)      y=x     // to bedzie funkcja ktora tlumaczy adresy MODBUS z koncentratora na adresy modolow
+
+#define MODBUS_SHM_MEMORY_NAME          "MODBUS_TAB_REGISTERS"
+
+// \SHM CTRL [1MA]
+
 #if defined(_MSC_VER)
 # if defined(DLLBUILD)
 /* define DLLBUILD when building the DLL */
@@ -201,11 +208,13 @@ MODBUS_API const char *modbus_strerror(int errnum);
 MODBUS_API int modbus_read_bits(modbus_t *ctx, int addr, int nb, uint8_t *dest);
 MODBUS_API int modbus_read_input_bits(modbus_t *ctx, int addr, int nb, uint8_t *dest);
 MODBUS_API int modbus_read_registers(modbus_t *ctx, int addr, int nb, uint16_t *dest);
+//MODBUS_API int modbus_read_registers_shm(modbus_t *ctx, int addr, int nb, uint16_t *dest);
 MODBUS_API int modbus_read_input_registers(modbus_t *ctx, int addr, int nb, uint16_t *dest);
 MODBUS_API int modbus_write_bit(modbus_t *ctx, int coil_addr, int status);
 MODBUS_API int modbus_write_register(modbus_t *ctx, int reg_addr, int value);
 MODBUS_API int modbus_write_bits(modbus_t *ctx, int addr, int nb, const uint8_t *data);
 MODBUS_API int modbus_write_registers(modbus_t *ctx, int addr, int nb, const uint16_t *data);
+//MODBUS_API int modbus_write_registers_shm(modbus_t *ctx, int addr, int nb, const uint16_t *data);
 MODBUS_API int modbus_mask_write_register(modbus_t *ctx, int addr, uint16_t and_mask, uint16_t or_mask);
 MODBUS_API int modbus_write_and_read_registers(modbus_t *ctx, int write_addr, int write_nb,
                                                const uint16_t *src, int read_addr, int read_nb,

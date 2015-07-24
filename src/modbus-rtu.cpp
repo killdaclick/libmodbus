@@ -1188,8 +1188,5 @@ modbus_t* modbus_new_rtu(const char *device,
 
     ctx_rtu->confirmation_to_ignore = FALSE;
 
-    // inicjalizacja SHMctrl
-    SHMctrl::Instance();
-
     return ctx;
 }

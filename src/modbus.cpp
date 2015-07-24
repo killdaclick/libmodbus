@@ -807,11 +807,26 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
         } else {
             int i;
 
-            rsp_length = ctx->backend->build_response_basis(&sft, rsp);
-            rsp[rsp_length++] = nb << 1;
-            for (i = address; i < address + nb; i++) {
-                rsp[rsp_length++] = mb_mapping->tab_registers[i] >> 8;
-                rsp[rsp_length++] = mb_mapping->tab_registers[i] & 0xFF;
+
+
+            uint16_t tab_registers[nb];
+            int32_t error;
+            int32_t shmRS = SHMctrl::Instance().read(MODBUS_SHM_MEMORY_NAME, address, nb, tab_registers, &error);
+            if( shmRS <= 0 )
+            {
+                fprintf(stderr, "Error reading Shared Memory: %d\n", error);
+                rsp_length = response_exception(
+                    ctx, &sft,
+                    MODBUS_EXCEPTION_SLAVE_OR_SERVER_FAILURE, rsp);
+            }
+            else
+            {
+                rsp_length = ctx->backend->build_response_basis(&sft, rsp);
+                rsp[rsp_length++] = nb << 1;
+                for (i = 0; i < nb; i++) {
+                    rsp[rsp_length++] = tab_registers[i] >> 8;
+                    rsp[rsp_length++] = tab_registers[i] & 0xFF;
+                }
             }
         }
     }
@@ -907,9 +922,20 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
         } else {
             int data = (req[offset + 3] << 8) + req[offset + 4];
 
-            mb_mapping->tab_registers[address] = data;
-            memcpy(rsp, req, req_length);
-            rsp_length = req_length;
+            int32_t error;
+            int32_t shmRS = SHMctrl::Instance().write(MODBUS_SHM_MEMORY_NAME, address, 1, (uint16_t*)&data, &error);
+            if( shmRS <= 0 )
+            {
+                fprintf(stderr, "Error writing Shared Memory: %d\n", error);
+                rsp_length = response_exception(
+                    ctx, &sft,
+                    MODBUS_EXCEPTION_SLAVE_OR_SERVER_FAILURE, rsp);
+            }
+            else
+            {
+                memcpy(rsp, req, req_length);
+                rsp_length = req_length;
+            }
         }
         break;
     case MODBUS_FC_WRITE_MULTIPLE_COILS: {
@@ -981,16 +1007,31 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
                 MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
         } else {
             int i, j;
-            for (i = address, j = 6; i < address + nb; i++, j += 2) {
+
+            uint16_t tab_registers[nb];
+
+            for (i = 0, j = 6; i < nb; i++, j += 2) {
                 /* 6 and 7 = first value */
-                mb_mapping->tab_registers[i] =
+                tab_registers[i] =
                     (req[offset + j] << 8) + req[offset + j + 1];
             }
 
-            rsp_length = ctx->backend->build_response_basis(&sft, rsp);
-            /* 4 to copy the address (2) and the no. of registers */
-            memcpy(rsp + rsp_length, req + rsp_length, 4);
-            rsp_length += 4;
+            int32_t error;
+            int32_t shmRS = SHMctrl::Instance().write(MODBUS_SHM_MEMORY_NAME, address, nb, tab_registers, &error);
+            if( shmRS <= 0 )
+            {
+                fprintf(stderr, "Error writing Shared Memory: %d\n", error);
+                rsp_length = response_exception(
+                    ctx, &sft,
+                    MODBUS_EXCEPTION_SLAVE_OR_SERVER_FAILURE, rsp);
+            }
+            else
+            {
+                rsp_length = ctx->backend->build_response_basis(&sft, rsp);
+                /* 4 to copy the address (2) and the no. of registers */
+                memcpy(rsp + rsp_length, req + rsp_length, 4);
+                rsp_length += 4;
+            }
         }
     }
         break;
@@ -1019,72 +1060,86 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
         return -1;
         break;
     case MODBUS_FC_MASK_WRITE_REGISTER:
-        if (address >= mb_mapping->nb_registers) {
-            if (ctx->debug) {
-                fprintf(stderr, "Illegal data address 0x%0X in write_register\n",
-                        address);
-            }
-            rsp_length = response_exception(
-                ctx, &sft,
-                MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
-        } else {
-            uint16_t data = mb_mapping->tab_registers[address];
-            uint16_t andd = (req[offset + 3] << 8) + req[offset + 4];
-            uint16_t orr = (req[offset + 5] << 8) + req[offset + 6];
+        // not used [1MA]
+        _sleep_response_timeout(ctx);
+        modbus_flush(ctx);
+        rsp_length = response_exception(
+            ctx, &sft,
+            MODBUS_EXCEPTION_ILLEGAL_FUNCTION, rsp);
 
-            data = (data & andd) | (orr & (~andd));
-            mb_mapping->tab_registers[address] = data;
-            memcpy(rsp, req, req_length);
-            rsp_length = req_length;
-        }
+//        if (address >= mb_mapping->nb_registers) {
+//            if (ctx->debug) {
+//                fprintf(stderr, "Illegal data address 0x%0X in write_register\n",
+//                        address);
+//            }
+//            rsp_length = response_exception(
+//                ctx, &sft,
+//                MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
+//        } else {
+//            uint16_t data = mb_mapping->tab_registers[address];
+//            uint16_t andd = (req[offset + 3] << 8) + req[offset + 4];
+//            uint16_t orr = (req[offset + 5] << 8) + req[offset + 6];
+
+//            data = (data & andd) | (orr & (~andd));
+//            mb_mapping->tab_registers[address] = data;
+//            memcpy(rsp, req, req_length);
+//            rsp_length = req_length;
+//        }
         break;
     case MODBUS_FC_WRITE_AND_READ_REGISTERS: {
-        int nb = (req[offset + 3] << 8) + req[offset + 4];
-        uint16_t address_write = (req[offset + 5] << 8) + req[offset + 6];
-        int nb_write = (req[offset + 7] << 8) + req[offset + 8];
-        int nb_write_bytes = req[offset + 9];
+        // not used [1MA]
+        _sleep_response_timeout(ctx);
+        modbus_flush(ctx);
+        rsp_length = response_exception(
+            ctx, &sft,
+            MODBUS_EXCEPTION_ILLEGAL_FUNCTION, rsp);
 
-        if (nb_write < 1 || MODBUS_MAX_WR_WRITE_REGISTERS < nb_write ||
-            nb < 1 || MODBUS_MAX_WR_READ_REGISTERS < nb ||
-            nb_write_bytes != nb_write * 2) {
-            if (ctx->debug) {
-                fprintf(stderr,
-                        "Illegal nb of values (W%d, R%d) in write_and_read_registers (max W%d, R%d)\n",
-                        nb_write, nb,
-                        MODBUS_MAX_WR_WRITE_REGISTERS, MODBUS_MAX_WR_READ_REGISTERS);
-            }
-            _sleep_response_timeout(ctx);
-            modbus_flush(ctx);
-            rsp_length = response_exception(
-                ctx, &sft,
-                MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
-        } else if ((address + nb) > mb_mapping->nb_registers ||
-                   (address_write + nb_write) > mb_mapping->nb_registers) {
-            if (ctx->debug) {
-                fprintf(stderr,
-                        "Illegal data read address 0x%0X or write address 0x%0X write_and_read_registers\n",
-                        address + nb, address_write + nb_write);
-            }
-            rsp_length = response_exception(ctx, &sft,
-                                            MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
-        } else {
-            int i, j;
-            rsp_length = ctx->backend->build_response_basis(&sft, rsp);
-            rsp[rsp_length++] = nb << 1;
+//        int nb = (req[offset + 3] << 8) + req[offset + 4];
+//        uint16_t address_write = (req[offset + 5] << 8) + req[offset + 6];
+//        int nb_write = (req[offset + 7] << 8) + req[offset + 8];
+//        int nb_write_bytes = req[offset + 9];
 
-            /* Write first.
-               10 and 11 are the offset of the first values to write */
-            for (i = address_write, j = 10; i < address_write + nb_write; i++, j += 2) {
-                mb_mapping->tab_registers[i] =
-                    (req[offset + j] << 8) + req[offset + j + 1];
-            }
+//        if (nb_write < 1 || MODBUS_MAX_WR_WRITE_REGISTERS < nb_write ||
+//            nb < 1 || MODBUS_MAX_WR_READ_REGISTERS < nb ||
+//            nb_write_bytes != nb_write * 2) {
+//            if (ctx->debug) {
+//                fprintf(stderr,
+//                        "Illegal nb of values (W%d, R%d) in write_and_read_registers (max W%d, R%d)\n",
+//                        nb_write, nb,
+//                        MODBUS_MAX_WR_WRITE_REGISTERS, MODBUS_MAX_WR_READ_REGISTERS);
+//            }
+//            _sleep_response_timeout(ctx);
+//            modbus_flush(ctx);
+//            rsp_length = response_exception(
+//                ctx, &sft,
+//                MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
+//        } else if ((address + nb) > mb_mapping->nb_registers ||
+//                   (address_write + nb_write) > mb_mapping->nb_registers) {
+//            if (ctx->debug) {
+//                fprintf(stderr,
+//                        "Illegal data read address 0x%0X or write address 0x%0X write_and_read_registers\n",
+//                        address + nb, address_write + nb_write);
+//            }
+//            rsp_length = response_exception(ctx, &sft,
+//                                            MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
+//        } else {
+//            int i, j;
+//            rsp_length = ctx->backend->build_response_basis(&sft, rsp);
+//            rsp[rsp_length++] = nb << 1;
 
-            /* and read the data for the response */
-            for (i = address; i < address + nb; i++) {
-                rsp[rsp_length++] = mb_mapping->tab_registers[i] >> 8;
-                rsp[rsp_length++] = mb_mapping->tab_registers[i] & 0xFF;
-            }
-        }
+//            /* Write first.
+//               10 and 11 are the offset of the first values to write */
+//            for (i = address_write, j = 10; i < address_write + nb_write; i++, j += 2) {
+//                mb_mapping->tab_registers[i] =
+//                    (req[offset + j] << 8) + req[offset + j + 1];
+//            }
+
+//            /* and read the data for the response */
+//            for (i = address; i < address + nb; i++) {
+//                rsp[rsp_length++] = mb_mapping->tab_registers[i] >> 8;
+//                rsp[rsp_length++] = mb_mapping->tab_registers[i] & 0xFF;
+//            }
+//        }
     }
         break;
 
@@ -1282,6 +1337,26 @@ static int read_registers(modbus_t *ctx, int function, int addr, int nb,
     return rc;
 }
 
+// wykonuje odczyt z modulow i zapis do SHM
+/* Reads the holding registers of remote device and put the data into an
+   array */
+/*int modbus_read_registers_shm(modbus_t *ctx, int addr, int nb, uint16_t *dest)
+{
+    int remoteAddr;
+
+    int stat = modbus_read_registers(ctx,nb,dest);
+    if( stat == -1 )
+        return -1;
+
+    int localAddr;
+    TRANSLATE_ADDR_FROM_MODULES(addr,localAddr);
+    int32_t error;
+    int32_t shmRS = SHMctrl::Instance().write(MODBUS_SHM_MEMORY_NAME, localAddr, nb, dest, &error);
+    if( shmRS <= 0 )
+        printf("Error writing Shared Memory: %d\n", error);
+    return shmRs;
+}*/
+
 /* Reads the holding registers of remote device and put the data into an
    array */
 int modbus_read_registers(modbus_t *ctx, int addr, int nb, uint16_t *dest)
@@ -1448,6 +1523,33 @@ int modbus_write_bits(modbus_t *ctx, int addr, int nb, const uint8_t *src)
 
     return rc;
 }
+
+// wykonuje odczyt z SHM i zapis do modulow
+/* Write the values from the array to the registers of the remote device */
+/*int modbus_write_registers_shm(modbus_t *ctx, int addr, int nb, const uint16_t *data)
+{
+    int stat = modbus_write_registers(ctx, addr, nb, data);
+    if( stat == -1 )
+        return -1;
+
+    int remoteAddr;
+    TRANSLATE_ADDR_TO_MODULES(remoteAddr, addr);
+    int32_t error;
+    int32_t shmRS = SHMctrl::Instance().write(MODBUS_SHM_MEMORY_NAME, localAddr, nb, dest, &error);
+
+
+    int stat = modbus_read_registers(ctx,nb,dest);
+    if( stat == -1 )
+        return -1;
+
+    int localAddr;
+    TRANSLATE_ADDR_FROM_MODULES(addr,localAddr);
+    int32_t error;
+    int32_t shmRS = SHMctrl::Instance().write(MODBUS_SHM_MEMORY_NAME, localAddr, nb, dest, &error);
+    if( shmRS <= 0 )
+        printf("Error writing Shared Memory: %d\n", error);
+    return shmRs;
+}*/
 
 /* Write the values from the array to the registers of the remote device */
 int modbus_write_registers(modbus_t *ctx, int addr, int nb, const uint16_t *src)
