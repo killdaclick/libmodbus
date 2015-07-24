@@ -1029,10 +1029,10 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
                 MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS, rsp);
         } else {
             uint16_t data = mb_mapping->tab_registers[address];
-            uint16_t and = (req[offset + 3] << 8) + req[offset + 4];
-            uint16_t or = (req[offset + 5] << 8) + req[offset + 6];
+            uint16_t andd = (req[offset + 3] << 8) + req[offset + 4];
+            uint16_t orr = (req[offset + 5] << 8) + req[offset + 6];
 
-            data = (data & and) | (or & (~and));
+            data = (data & andd) | (orr & (~andd));
             mb_mapping->tab_registers[address] = data;
             memcpy(rsp, req, req_length);
             rsp_length = req_length;

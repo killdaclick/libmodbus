@@ -89,7 +89,7 @@ static int _modbus_tcp_build_request_basis(modbus_t *ctx, int function,
                                            int addr, int nb,
                                            uint8_t *req)
 {
-    modbus_tcp_t *ctx_tcp = ctx->backend_data;
+    modbus_tcp_t *ctx_tcp = (modbus_tcp_t *)ctx->backend_data;
 
     /* Increase transaction ID */
     if (ctx_tcp->t_id < UINT16_MAX)
@@ -298,7 +298,7 @@ static int _modbus_tcp_connect(modbus_t *ctx)
     int rc;
     /* Specialized version of sockaddr for Internet socket address (same size) */
     struct sockaddr_in addr;
-    modbus_tcp_t *ctx_tcp = ctx->backend_data;
+    modbus_tcp_t *ctx_tcp = (modbus_tcp_t *)ctx->backend_data;
     int flags = SOCK_STREAM;
 
 #ifdef OS_WIN32
@@ -351,7 +351,7 @@ static int _modbus_tcp_pi_connect(modbus_t *ctx)
     struct addrinfo *ai_list;
     struct addrinfo *ai_ptr;
     struct addrinfo ai_hints;
-    modbus_tcp_pi_t *ctx_tcp_pi = ctx->backend_data;
+    modbus_tcp_pi_t *ctx_tcp_pi = (modbus_tcp_pi_t *)ctx->backend_data;
 
 #ifdef OS_WIN32
     if (_modbus_tcp_init_win32() == -1) {
@@ -482,7 +482,7 @@ int modbus_tcp_listen(modbus_t *ctx, int nb_connection)
         return -1;
     }
 
-    ctx_tcp = ctx->backend_data;
+    ctx_tcp = (modbus_tcp_t *)ctx->backend_data;
 
 #ifdef OS_WIN32
     if (_modbus_tcp_init_win32() == -1) {
@@ -542,7 +542,7 @@ int modbus_tcp_pi_listen(modbus_t *ctx, int nb_connection)
         return -1;
     }
 
-    ctx_tcp_pi = ctx->backend_data;
+    ctx_tcp_pi = (modbus_tcp_pi_t *)ctx->backend_data;
 
 #ifdef OS_WIN32
     if (_modbus_tcp_init_win32() == -1) {

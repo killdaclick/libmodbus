@@ -274,7 +274,7 @@ static ssize_t _modbus_rtu_send(modbus_t *ctx, const uint8_t *req, int req_lengt
     return (WriteFile(ctx_rtu->w_ser.fd, req, req_length, &n_bytes, NULL)) ? (ssize_t)n_bytes : -1;
 #else
 #if HAVE_DECL_TIOCM_RTS
-    modbus_rtu_t *ctx_rtu = ctx->backend_data;
+    modbus_rtu_t *ctx_rtu = (modbus_rtu_t *)ctx->backend_data;
     if (ctx_rtu->rts != MODBUS_RTU_RTS_NONE) {
         ssize_t size;
 
@@ -303,7 +303,7 @@ static ssize_t _modbus_rtu_send(modbus_t *ctx, const uint8_t *req, int req_lengt
 static int _modbus_rtu_receive(modbus_t *ctx, uint8_t *req)
 {
     int rc;
-    modbus_rtu_t *ctx_rtu = ctx->backend_data;
+    modbus_rtu_t *ctx_rtu = (modbus_rtu_t *)ctx->backend_data;
 
     if (ctx_rtu->confirmation_to_ignore) {
         _modbus_receive_msg(ctx, req, MSG_CONFIRMATION);
@@ -402,7 +402,7 @@ static int _modbus_rtu_connect(modbus_t *ctx)
     speed_t speed;
     int flags;
 #endif
-    modbus_rtu_t *ctx_rtu = ctx->backend_data;
+    modbus_rtu_t *ctx_rtu = (modbus_rtu_t *)ctx->backend_data;
 
     if (ctx->debug) {
         printf("Opening %s at %d bauds (%c, %d, %d)\n",
@@ -906,7 +906,7 @@ int modbus_rtu_set_serial_mode(modbus_t *ctx, int mode)
 
     if (ctx->backend->backend_type == _MODBUS_BACKEND_TYPE_RTU) {
 #if HAVE_DECL_TIOCSRS485
-        modbus_rtu_t *ctx_rtu = ctx->backend_data;
+        modbus_rtu_t *ctx_rtu = (modbus_rtu_t *)ctx->backend_data;
         struct serial_rs485 rs485conf;
         memset(&rs485conf, 0x0, sizeof(struct serial_rs485));
 
@@ -952,7 +952,7 @@ int modbus_rtu_get_serial_mode(modbus_t *ctx)
 
     if (ctx->backend->backend_type == _MODBUS_BACKEND_TYPE_RTU) {
 #if HAVE_DECL_TIOCSRS485
-        modbus_rtu_t *ctx_rtu = ctx->backend_data;
+        modbus_rtu_t *ctx_rtu = (modbus_rtu_t *)ctx->backend_data;
         return ctx_rtu->serial_mode;
 #else
         if (ctx->debug) {
@@ -976,7 +976,7 @@ int modbus_rtu_set_rts(modbus_t *ctx, int mode)
 
     if (ctx->backend->backend_type == _MODBUS_BACKEND_TYPE_RTU) {
 #if HAVE_DECL_TIOCM_RTS
-        modbus_rtu_t *ctx_rtu = ctx->backend_data;
+        modbus_rtu_t *ctx_rtu = (modbus_rtu_t *)ctx->backend_data;
 
         if (mode == MODBUS_RTU_RTS_NONE || mode == MODBUS_RTU_RTS_UP ||
             mode == MODBUS_RTU_RTS_DOWN) {
@@ -1012,7 +1012,7 @@ int modbus_rtu_get_rts(modbus_t *ctx)
 
     if (ctx->backend->backend_type == _MODBUS_BACKEND_TYPE_RTU) {
 #if HAVE_DECL_TIOCM_RTS
-        modbus_rtu_t *ctx_rtu = ctx->backend_data;
+        modbus_rtu_t *ctx_rtu = (modbus_rtu_t *)ctx->backend_data;
         return ctx_rtu->rts;
 #else
         if (ctx->debug) {
@@ -1030,7 +1030,7 @@ int modbus_rtu_get_rts(modbus_t *ctx)
 static void _modbus_rtu_close(modbus_t *ctx)
 {
     /* Restore line settings and close file descriptor in RTU mode */
-    modbus_rtu_t *ctx_rtu = ctx->backend_data;
+    modbus_rtu_t *ctx_rtu = (modbus_rtu_t *)ctx->backend_data;
 
 #if defined(_WIN32)
     /* Revert settings */
@@ -1187,6 +1187,9 @@ modbus_t* modbus_new_rtu(const char *device,
 #endif
 
     ctx_rtu->confirmation_to_ignore = FALSE;
+
+    // inicjalizacja SHMctrl
+    SHMctrl::Instance();
 
     return ctx;
 }
