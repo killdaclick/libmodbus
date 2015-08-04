@@ -22,14 +22,12 @@
 #include <semaphore.h>
 // \semaphores
 
-#define SHMCTRL_INIT_REGSHMLISTATTACH_ERROR   1
-#define SHMCTRL_INIT_REGSHMWRONGNAME_ERROR  2
-#define SHMCTRL_INIT_REGSHMRESATTACH_ERROR  4
-#define SHMCTRL_READWRITE_REGSHMWRONGNAME_ERROR 8
-#define SHMCTRL_READWRITE_OFFSETOUTOFRANGE_ERROR 16
-#define SHMCTRL_READWRITE_SIZEOUTOFRANGE_ERROR 32
-#define SHMCTRL_READWRITE_UNKNOWN_ERROR 64
-#define SHMCTRL_INIT_REGSHMSEMAPHORE_ADDRNOTFOUND_ERROR 128
+#define SHMCTRL_INIT_SHMLIST_ATTACH_ERROR                   1
+#define SHMCTRL_INIT_SHMWRONGNAME_ERROR                     2
+#define SHMCTRL_INIT_SHMRESOURCE_ATTACH_ERROR               4
+#define SHMCTRL_INIT_SHMSEMAPHORE_ADDR_NOTFOUND_ERROR       8
+#define SHMCTRL_READWRITE_OFFSET_OUTOFRANGE_ERROR           16
+#define SHMCTRL_READWRITE_SIZE_OUTOFRANGE_ERROR             32
 
 using namespace std;
 
@@ -51,7 +49,7 @@ class EXPORT SHMctrl
             uint16_t sizeW;
             uint8_t sectorSize;
             uint8_t listPos;
-            uint8_t semCnt;
+            uint16_t semCnt;
             uint16_t semOffset;
         };
         typedef pair<string, SHMresourceItemStruct> SHMresourcesMapPair;
