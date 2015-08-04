@@ -5,6 +5,71 @@ CONFIG -= qt
 CONFIG += staticlib
 CONFIG += c++11
 
+contains( KIT, i386 ) {
+    CONFIG(debug, debug|release) {
+        message("i386 debug")
+        OUTDIR =        $$OUT_PWD/debug/i386
+        DESTDIR =       $$OUTDIR
+        OBJECTS_DIR =   $$OUTDIR
+        MOC_DIR =       $$OUTDIR
+        RCC_DIR =       $$OUTDIR
+        UI_DIR =        $$OUTDIR
+
+    } else {
+        message("i386 release")
+        OUTDIR =        $$OUT_PWD/release/i386
+        DESTDIR =       $$OUTDIR
+        OBJECTS_DIR =   $$OUTDIR
+        MOC_DIR =       $$OUTDIR
+        RCC_DIR =       $$OUTDIR
+        UI_DIR =        $$OUTDIR
+    }
+}
+
+contains( KIT, ARM9 ) {
+
+    CONFIG(debug, debug|release) {
+        message("ARM9 debug")
+        OUTDIR =        $$OUT_PWD/debug/arm926ej-s
+        DESTDIR =       $$OUTDIR
+        OBJECTS_DIR =   $$OUTDIR
+        MOC_DIR =       $$OUTDIR
+        RCC_DIR =       $$OUTDIR
+        UI_DIR =        $$OUTDIR
+
+    } else {
+        message("ARM9 release")
+        OUTDIR =        $$OUT_PWD/release/arm926ej-s
+        DESTDIR =       $$OUTDIR
+        OBJECTS_DIR =   $$OUTDIR
+        MOC_DIR =       $$OUTDIR
+        RCC_DIR =       $$OUTDIR
+        UI_DIR =        $$OUTDIR
+    }
+}
+
+contains( KIT, CortexA8 ) {
+
+    CONFIG(debug, debug|release) {
+        message("CortexA8 debug")
+        OUTDIR =        $$OUT_PWD/debug/cortex-a8
+        DESTDIR =       $$OUTDIR
+        OBJECTS_DIR =   $$OUTDIR
+        MOC_DIR =       $$OUTDIR
+        RCC_DIR =       $$OUTDIR
+        UI_DIR =        $$OUTDIR
+
+    } else {
+        message("CortexA8 release")
+        OUTDIR =        $$OUT_PWD/release/cortex-a8
+        DESTDIR =       $$OUTDIR
+        OBJECTS_DIR =   $$OUTDIR
+        MOC_DIR =       $$OUTDIR
+        RCC_DIR =       $$OUTDIR
+        UI_DIR =        $$OUTDIR
+    }
+}
+
 # wybor trybu kompilacji (jeden mozliwy)
 #CONFIG += COMPILE_DLL
 #CONFIG += COMPILE_STATIC
