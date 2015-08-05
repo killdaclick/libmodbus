@@ -72,8 +72,8 @@ contains( KIT, CortexA8 ) {
 
 # wybor trybu kompilacji (jeden mozliwy)
 #CONFIG += COMPILE_DLL
-#CONFIG += COMPILE_STATIC
-CONFIG += COMPILE_APP
+CONFIG += COMPILE_STATIC
+#CONFIG += COMPILE_APP
 
 COMPILE_DLL {
 TEMPLATE = lib
